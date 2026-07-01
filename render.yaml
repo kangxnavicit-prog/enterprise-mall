@@ -6,7 +6,7 @@ services:
     branch: main
     plan: free
     buildCommand: |
-      cd server && npm install && npx prisma generate
+      cd server && npm install && npx prisma generate && npm run build
       cd ../client && npm install && npx vite build
     startCommand: node start.js
     healthCheckPath: /api/products?pageSize=1
@@ -20,6 +20,6 @@ services:
       - key: CLIENT_DIST
         value: /opt/render/project/src/client/dist
       - key: DATABASE_URL
-        value: file:./server/prisma/dev.db
+        value: file:./dev.db
       - key: JWT_SECRET
         generateValue: true
