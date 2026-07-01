@@ -1,0 +1,160 @@
+classDiagram
+    class User {
+        +int id
+        +string employeeId
+        +string username
+        +string passwordHash
+        +UserRole role
+        +string department
+        +int points
+        +string avatarUrl
+        +string address
+        +boolean isActive
+        +datetime createdAt
+        +datetime updatedAt
+    }
+
+    class Category {
+        +int id
+        +string name
+        +string icon
+        +int sortOrder
+        +boolean isActive
+        +datetime createdAt
+    }
+
+    class Product {
+        +int id
+        +int categoryId
+        +string name
+        +string description
+        +string[] images
+        +int pointsPrice
+        +int stock
+        +int version
+        +ProductStatus status
+        +float avgRating
+        +datetime createdAt
+        +datetime updatedAt
+    }
+
+    class CartItem {
+        +int id
+        +int userId
+        +int productId
+        +int quantity
+        +datetime createdAt
+        +datetime updatedAt
+    }
+
+    class Order {
+        +int id
+        +string orderNo
+        +int userId
+        +int totalPoints
+        +OrderStatus status
+        +string address
+        +string trackingNo
+        +string remark
+        +datetime createdAt
+        +datetime shippedAt
+        +datetime completedAt
+    }
+
+    class OrderItem {
+        +int id
+        +int orderId
+        +int productId
+        +string productName
+        +string productImage
+        +int pointsPrice
+        +int quantity
+    }
+
+    class PointRecord {
+        +int id
+        +int userId
+        +PointType type
+        +int points
+        +int balance
+        +string reason
+        +int orderId
+        +int operatorId
+        +datetime createdAt
+    }
+
+    class Review {
+        +int id
+        +int userId
+        +int productId
+        +int orderId
+        +int rating
+        +string content
+        +string[] images
+        +datetime createdAt
+    }
+
+    %% Relationships
+    User "1" --o "0..*" CartItem : has
+    User "1" --o "0..*" Order : places
+    User "1" --o "0..*" PointRecord : records
+    User "1" --o "0..*" Review : writes
+    Category "1" --o "0..*" Product : contains
+    Product "1" --o "0..*" CartItem : in
+    Product "1" --o "0..*" OrderItem : orderedAs
+    Product "1" --o "0..*" Review : reviewed
+    Order "1" --o "1..*" OrderItem : contains
+
+    %% Service Classes
+    class AuthService {
+        +login(employeeId, password) ApiResponse
+        +generateToken(user) string
+        +verifyToken(token) UserPayload
+    }
+
+    class ProductService {
+        +listProducts(filters) PaginatedData
+        +getProductById(id) Product
+    }
+
+    class CartService {
+        +getCart(userId) CartItem[]
+        +addItem(userId, productId, quantity) CartItem
+        +updateItem(cartItemId, quantity) CartItem
+        +removeItem(cartItemId) void
+    }
+
+    class OrderService {
+        +createOrder(userId, payload) Order
+        +getOrders(userId, filters) PaginatedData
+        +getOrderById(orderId) Order
+    }
+
+    class AdminProductService {
+        +createProduct(data) Product
+        +updateProduct(id, data) Product
+        +deleteProduct(id) void
+        +uploadImage(productId, file) string[]
+    }
+
+    class AdminOrderService {
+        +getAllOrders(filters) PaginatedData
+        +updateOrderStatus(id, status, trackingNo) Order
+    }
+
+    class AdminUserService {
+        +listUsers(filters) PaginatedData
+        +adjustPoints(userId, points, reason) User
+    }
+
+    class AdminDashboardService {
+        +getDashboardStats() DashboardStats
+    }
+
+    AuthService ..> User : operates on
+    CartService ..> CartItem : manages
+    OrderService ..> Order : manages
+    OrderService ..> Product : checks stock
+    OrderService ..> User : deducts points
+    AdminProductService ..> Product : CRUD
+    AdminOrderService ..> Order : updates

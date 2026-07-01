@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Server build output
+server/dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Client build output
+client/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Uploads (keep folder but not contents)
+uploads/products/*
+!uploads/products/.gitkeep
+
+# Prisma
+server/prisma/dev.db
+server/prisma/dev.db-journal

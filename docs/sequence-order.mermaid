@@ -1,0 +1,59 @@
+sequenceDiagram
+    actor Employee as 员工
+    participant Frontend as 前端 (React)
+    participant API as 后端 API
+    participant OrderSvc as OrderService
+    participant CartSvc as CartService
+    participant DB as PostgreSQL
+
+    Employee->>Frontend: 点击"提交订单"
+    Frontend->>API: POST /api/orders {address, remark}
+    API->>OrderSvc: createOrder(userId, payload)
+    
+    Note over OrderSvc,DB: 开始事务 $transaction
+    
+    OrderSvc->>DB: SELECT * FROM cart_items WHERE user_id = ? (JOIN products)
+    DB-->>OrderSvc: cartItems[] with product info
+    
+    OrderSvc->>OrderSvc: 校验: 商品状态、库存充足性
+    
+    alt 校验失败
+        OrderSvc-->>API: AppError(40900, '库存不足/商品不可购买')
+        API-->>Frontend: {code: 40900, message: '...'}
+        Frontend-->>Employee: 提示库存不足
+    else 校验通过
+        OrderSvc->>OrderSvc: 计算 totalPoints = Σ(item.pointsPrice × item.quantity)
+        
+        OrderSvc->>DB: SELECT points FROM users WHERE id = ?
+        DB-->>OrderSvc: currentPoints
+        
+        alt 积分不足
+            OrderSvc-->>API: AppError(40900, '积分不足')
+            API-->>Frontend: {code: 40900, message: '积分不足'}
+            Frontend-->>Employee: 提示积分不足
+        else 积分充足
+            OrderSvc->>DB: UPDATE users SET points = points - totalPoints WHERE id = ?
+            OrderSvc->>DB: INSERT INTO point_records (type=CONSUME, ...)
+            
+            loop 每个商品项
+                OrderSvc->>DB: UPDATE products SET stock = stock - quantity, version = version + 1 WHERE id = ? AND version = expectedVersion
+                alt 乐观锁冲突
+                    OrderSvc-->>API: AppError(40900, '库存并发冲突')
+                    Note over OrderSvc,DB: 事务回滚
+                else 更新成功
+                    OrderSvc->>DB: INSERT INTO order_items (...)
+                end
+            end
+            
+            OrderSvc->>DB: INSERT INTO orders (order_no, ...)
+            OrderSvc->>DB: DELETE FROM cart_items WHERE user_id = ?
+            
+            Note over OrderSvc,DB: 事务提交
+            
+            OrderSvc-->>API: order
+            API-->>Frontend: {code: 20000, data: order}
+            Frontend->>Frontend: cartStore.clearCart()
+            Frontend->>Frontend: authStore.updatePoints(user.points - totalPoints)
+            Frontend-->>Employee: 跳转到订单详情页 /orders/:id
+        end
+    end

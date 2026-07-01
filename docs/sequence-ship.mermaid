@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor Admin as 管理员
+    participant Frontend as 前端 (React)
+    participant API as 后端 API
+    participant AdminOrderSvc as AdminOrderService
+    participant DB as PostgreSQL
+
+    Admin->>Frontend: 在订单管理页点击"发货"
+    Frontend->>Frontend: 弹出发货表单（输入快递单号）
+    Admin->>Frontend: 输入快递单号，确认
+    Frontend->>API: PUT /api/admin/orders/:id {status: 'SHIPPED', trackingNo: 'SF123456'}
+    API->>AdminOrderSvc: updateOrderStatus(orderId, 'SHIPPED', trackingNo)
+    AdminOrderSvc->>DB: SELECT * FROM orders WHERE id = ?
+    DB-->>AdminOrderSvc: order
+    
+    alt 订单状态 != PENDING
+        AdminOrderSvc-->>API: AppError(40900, '订单状态不允许发货')
+        API-->>Frontend: {code: 40900, message: '...'}
+        Frontend-->>Admin: 提示操作失败
+    else 状态为 PENDING
+        AdminOrderSvc->>DB: UPDATE orders SET status = 'SHIPPED', tracking_no = ?, shipped_at = NOW() WHERE id = ?
+        DB-->>AdminOrderSvc: updated order
+        AdminOrderSvc-->>API: order
+        API-->>Frontend: {code: 20000, data: order}
+        Frontend-->>Admin: 显示发货成功，订单状态更新为"已发货"
+    end

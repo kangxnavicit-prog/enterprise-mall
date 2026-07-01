@@ -1,0 +1,158 @@
+// Enterprise Mall - Prisma Schema Definition (SQLite Compatible)
+// Defines all database models with @map/@@map for snake_case column/table mapping
+// NOTE: SQLite does not support native enums or primitive arrays.
+//   - Enums are replaced with String fields (values match enum names)
+//   - String[] arrays are replaced with Json fields (stored/parsed transparently)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  employeeId    String    @unique @map("employee_id")
+  username      String    @unique
+  passwordHash  String    @map("password_hash")
+  role          String    @default("EMPLOYEE")
+  department    String?   @map("department")
+  points        Int       @default(0)
+  avatarUrl     String?   @map("avatar_url")
+  address       String?
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  cartItems     CartItem[]
+  orders        Order[]
+  pointRecords  PointRecord[]
+  reviews       Review[]
+  operatedRecords PointRecord[] @relation("Operator")
+
+  @@map("users")
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  icon      String?
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  categoryId  Int       @map("category_id")
+  name        String
+  sku         String    @unique @map("sku")
+  description String?
+  images      String    @default("[]")
+  pointsPrice Int       @map("points_price")
+  stock       Int       @default(0)
+  version     Int       @default(0)
+  status      String    @default("ACTIVE")
+  avgRating   Float     @default(0) @map("avg_rating")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  category    Category  @relation(fields: [categoryId], references: [id])
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  reviews     Review[]
+
+  @@map("products")
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  productId Int      @map("product_id")
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model Order {
+  id         Int        @id @default(autoincrement())
+  orderNo    String     @unique @map("order_no")
+  userId     Int        @map("user_id")
+  totalPoints Int       @map("total_points")
+  status     String     @default("PENDING")
+  address    String?
+  trackingNo String?    @map("tracking_no")
+  remark     String?
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+  shippedAt  DateTime?  @map("shipped_at")
+  completedAt DateTime? @map("completed_at")
+
+  user       User       @relation(fields: [userId], references: [id])
+  orderItems OrderItem[]
+  pointRecords PointRecord[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id           Int    @id @default(autoincrement())
+  orderId      Int    @map("order_id")
+  productId    Int    @map("product_id")
+  productName  String @map("product_name")
+  productImage String @map("product_image")
+  pointsPrice  Int    @map("points_price")
+  quantity     Int
+
+  order        Order   @relation(fields: [orderId], references: [id])
+  product      Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model PointRecord {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  type       String
+  points     Int
+  balance    Int
+  reason     String?
+  orderId    Int?      @map("order_id")
+  operatorId Int?      @map("operator_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user       User      @relation(fields: [userId], references: [id])
+  operator   User?     @relation("Operator", fields: [operatorId], references: [id])
+  order      Order?    @relation(fields: [orderId], references: [id])
+
+  @@map("point_records")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  productId Int      @map("product_id")
+  orderId   Int      @map("order_id")
+  rating    Int
+  content   String?
+  images    String   @default("[]")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@map("reviews")
+}

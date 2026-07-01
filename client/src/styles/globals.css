@@ -1,0 +1,69 @@
+/* Enterprise Mall - Global Styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fix: Prevent Tailwind Preflight from overriding MUI TextField internals */
+.MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(0, 0, 0, 0.23) !important;
+}
+.MuiInputLabel-shrink {
+  transform: translateY(-18px) scale(0.75) !important;
+}
+
+/* Base styles — warm tinted background matching MUI theme */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #fff8f0;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* Scrollbar styling — warm tinted */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fef5ef;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4a574;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b8865a;
+}
+
+/* Utility classes */
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.card-shadow {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.transition-hover {
+  transition: all 0.25s ease;
+}
+
+.transition-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(216, 67, 21, 0.12);
+}
+
+/* Global card hover effect */
+.MuiCard-root {
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.MuiCard-root:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(216, 67, 21, 0.10);
+}

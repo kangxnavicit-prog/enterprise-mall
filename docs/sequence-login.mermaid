@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor Employee as 员工
+    participant Frontend as 前端 (React)
+    participant API as 后端 API
+    participant AuthSvc as AuthService
+    participant DB as PostgreSQL
+
+    Employee->>Frontend: 输入工号+密码，点击登录
+    Frontend->>API: POST /api/auth/login {employeeId, password}
+    API->>AuthSvc: login(employeeId, password)
+    AuthSvc->>DB: SELECT * FROM users WHERE employee_id = ?
+    DB-->>AuthSvc: user record
+    AuthSvc->>AuthSvc: bcrypt.compare(password, passwordHash)
+    alt 密码正确
+        AuthSvc->>AuthSvc: jwt.sign({id, role, employeeId})
+        AuthSvc-->>API: {token, user}
+        API-->>Frontend: {code: 20000, data: {token, user}}
+        Frontend->>Frontend: authStore.setAuth(user, token)
+        Frontend->>Frontend: localStorage.setItem('token', token)
+        Frontend->>Frontend: axios.defaults.headers.common['Authorization'] = Bearer token
+        Frontend-->>Employee: 跳转到首页 /
+    else 密码错误
+        AuthSvc-->>API: AppError(40100, '密码错误')
+        API-->>Frontend: {code: 40100, message: '密码错误'}
+        Frontend-->>Employee: 显示错误提示
+    end
