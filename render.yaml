@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: enterprise-mall
+    runtime: node
+    repo: https://github.com/kangxnavicit-prog/enterprise-mall
+    branch: main
+    plan: free
+    buildCommand: |
+      cd server && npm install && npx prisma generate
+      cd ../client && npm install && npx vite build
+    startCommand: node start.js
+    healthCheckPath: /api/products?pageSize=1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: CLIENT_DIST
+        value: /opt/render/project/src/client/dist
+      - key: DATABASE_URL
+        value: file:./server/prisma/dev.db
+      - key: JWT_SECRET
+        generateValue: true
